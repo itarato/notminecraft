@@ -9,54 +9,57 @@ void DrawCubeTexture(Texture2D texture, Vector3 position, float width, float hei
     float y = position.y;
     float z = position.z;
 
+    // Enable backface culling
+    rlEnableBackfaceCulling();
+
     // Define vertices for all faces
-    // Vertices are defined in counter-clockwise order looking at each face from outside
+    // Vertices defined clockwise for each face when looking at the face from outside
     Vector3 vertices[24] = {
-        // Front face
+        // Front face (+Z)
         {x - width/2, y - height/2, z + length/2},  // Bottom Left
+        {x - width/2, y + height/2, z + length/2},  // Top Left
+        {x + width/2, y + height/2, z + length/2},  // Top Right
         {x + width/2, y - height/2, z + length/2},  // Bottom Right
-        {x + width/2, y + height/2, z + length/2},  // Top Right
-        {x - width/2, y + height/2, z + length/2},  // Top Left
         
-        // Back face
+        // Back face (-Z)
         {x + width/2, y - height/2, z - length/2},  // Bottom Left
-        {x - width/2, y - height/2, z - length/2},  // Bottom Right
-        {x - width/2, y + height/2, z - length/2},  // Top Right
         {x + width/2, y + height/2, z - length/2},  // Top Left
+        {x - width/2, y + height/2, z - length/2},  // Top Right
+        {x - width/2, y - height/2, z - length/2},  // Bottom Right
         
-        // Top face
+        // Top face (+Y)
         {x - width/2, y + height/2, z - length/2},  // Bottom Left
-        {x + width/2, y + height/2, z - length/2},  // Bottom Right
-        {x + width/2, y + height/2, z + length/2},  // Top Right
         {x - width/2, y + height/2, z + length/2},  // Top Left
+        {x + width/2, y + height/2, z + length/2},  // Top Right
+        {x + width/2, y + height/2, z - length/2},  // Bottom Right
         
-        // Bottom face
+        // Bottom face (-Y)
         {x - width/2, y - height/2, z - length/2},  // Bottom Left
         {x + width/2, y - height/2, z - length/2},  // Bottom Right
         {x + width/2, y - height/2, z + length/2},  // Top Right
         {x - width/2, y - height/2, z + length/2},  // Top Left
         
-        // Right face
+        // Right face (+X)
         {x + width/2, y - height/2, z - length/2},  // Bottom Left
         {x + width/2, y - height/2, z + length/2},  // Bottom Right
         {x + width/2, y + height/2, z + length/2},  // Top Right
         {x + width/2, y + height/2, z - length/2},  // Top Left
         
-        // Left face
-        {x - width/2, y - height/2, z + length/2},  // Bottom Left
-        {x - width/2, y - height/2, z - length/2},  // Bottom Right
-        {x - width/2, y + height/2, z - length/2},  // Top Right
-        {x - width/2, y + height/2, z + length/2}   // Top Left
+        // Left face (-X)
+        {x - width/2, y - height/2, z - length/2},  // Bottom Left
+        {x - width/2, y - height/2, z + length/2},  // Bottom Right
+        {x - width/2, y + height/2, z + length/2},  // Top Right
+        {x - width/2, y + height/2, z - length/2}   // Top Left
     };
 
     // Define texture coordinates for each vertex
     Vector2 texcoords[24] = {
-        {0.0f, 1.0f}, {1.0f, 1.0f}, {1.0f, 0.0f}, {0.0f, 0.0f},  // Front
-        {0.0f, 1.0f}, {1.0f, 1.0f}, {1.0f, 0.0f}, {0.0f, 0.0f},  // Back
-        {0.0f, 1.0f}, {1.0f, 1.0f}, {1.0f, 0.0f}, {0.0f, 0.0f},  // Top
-        {0.0f, 1.0f}, {1.0f, 1.0f}, {1.0f, 0.0f}, {0.0f, 0.0f},  // Bottom
-        {0.0f, 1.0f}, {1.0f, 1.0f}, {1.0f, 0.0f}, {0.0f, 0.0f},  // Right
-        {0.0f, 1.0f}, {1.0f, 1.0f}, {1.0f, 0.0f}, {0.0f, 0.0f}   // Left
+        {0.0f, 0.0f}, {0.0f, 1.0f}, {1.0f, 1.0f}, {1.0f, 0.0f},  // Front
+        {0.0f, 0.0f}, {0.0f, 1.0f}, {1.0f, 1.0f}, {1.0f, 0.0f},  // Back
+        {0.0f, 0.0f}, {0.0f, 1.0f}, {1.0f, 1.0f}, {1.0f, 0.0f},  // Top
+        {0.0f, 0.0f}, {1.0f, 0.0f}, {1.0f, 1.0f}, {0.0f, 1.0f},  // Bottom
+        {0.0f, 0.0f}, {1.0f, 0.0f}, {1.0f, 1.0f}, {0.0f, 1.0f},  // Right
+        {0.0f, 0.0f}, {1.0f, 0.0f}, {1.0f, 1.0f}, {0.0f, 1.0f}   // Left
     };
 
     rlBegin(RL_QUADS);
@@ -78,6 +81,9 @@ void DrawCubeTexture(Texture2D texture, Vector3 position, float width, float hei
             rlVertex3f(vertices[i + 3].x, vertices[i + 3].y, vertices[i + 3].z);
         }
     rlEnd();
+
+    // Disable backface culling (return to default state)
+    rlDisableBackfaceCulling();
 }
 
 struct App {
@@ -91,7 +97,6 @@ struct App {
         InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "NotMineCraft");
         SetTargetFPS(120);
 
-        // Load the texture when the app starts
         cubeTex = LoadTexture("asset/cube.png");
     }
 
