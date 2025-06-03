@@ -21,8 +21,7 @@ void DrawCubeFace(Vector2 *texcoords, Vector3 *vertices, int i) {
   rlVertex3f(vertices[i + 3].x, vertices[i + 3].y, vertices[i + 3].z);
 }
 
-void DrawCubeTexture(Texture2D &texture_top, Texture2D &texture_side, Texture2D &texture_bottom, Vector3 position,
-                     Color color) {
+void DrawCubeTexture(Texture2D *textures, Vector3 position, Color color) {
   float x = position.x;
   float y = position.y;
   float z = position.z;
@@ -46,27 +45,27 @@ void DrawCubeTexture(Texture2D &texture_top, Texture2D &texture_side, Texture2D 
 
       // Front face (+Z)
       {x + CUBE_SIZE_HALF, y + CUBE_SIZE_HALF, z + CUBE_SIZE_HALF},  // Top Right
-      {x + CUBE_SIZE_HALF, y - CUBE_SIZE_HALF, z + CUBE_SIZE_HALF},  // Bottom Right
-      {x - CUBE_SIZE_HALF, y - CUBE_SIZE_HALF, z + CUBE_SIZE_HALF},  // Bottom Left
       {x - CUBE_SIZE_HALF, y + CUBE_SIZE_HALF, z + CUBE_SIZE_HALF},  // Top Left
+      {x - CUBE_SIZE_HALF, y - CUBE_SIZE_HALF, z + CUBE_SIZE_HALF},  // Bottom Left
+      {x + CUBE_SIZE_HALF, y - CUBE_SIZE_HALF, z + CUBE_SIZE_HALF},  // Bottom Right
 
       // Back face (-Z)
       {x - CUBE_SIZE_HALF, y + CUBE_SIZE_HALF, z - CUBE_SIZE_HALF},  // Top Right
-      {x - CUBE_SIZE_HALF, y - CUBE_SIZE_HALF, z - CUBE_SIZE_HALF},  // Bottom Right
-      {x + CUBE_SIZE_HALF, y - CUBE_SIZE_HALF, z - CUBE_SIZE_HALF},  // Bottom Left
       {x + CUBE_SIZE_HALF, y + CUBE_SIZE_HALF, z - CUBE_SIZE_HALF},  // Top Left
+      {x + CUBE_SIZE_HALF, y - CUBE_SIZE_HALF, z - CUBE_SIZE_HALF},  // Bottom Left
+      {x - CUBE_SIZE_HALF, y - CUBE_SIZE_HALF, z - CUBE_SIZE_HALF},  // Bottom Right
 
       // Right face (+X)
       {x + CUBE_SIZE_HALF, y + CUBE_SIZE_HALF, z + CUBE_SIZE_HALF},  // Top Right
-      {x + CUBE_SIZE_HALF, y + CUBE_SIZE_HALF, z - CUBE_SIZE_HALF},  // Top Left
-      {x + CUBE_SIZE_HALF, y - CUBE_SIZE_HALF, z - CUBE_SIZE_HALF},  // Bottom Left
       {x + CUBE_SIZE_HALF, y - CUBE_SIZE_HALF, z + CUBE_SIZE_HALF},  // Bottom Right
+      {x + CUBE_SIZE_HALF, y - CUBE_SIZE_HALF, z - CUBE_SIZE_HALF},  // Bottom Left
+      {x + CUBE_SIZE_HALF, y + CUBE_SIZE_HALF, z - CUBE_SIZE_HALF},  // Top Left
 
       // Left face (-X)
-      {x - CUBE_SIZE_HALF, y + CUBE_SIZE_HALF, z + CUBE_SIZE_HALF},  // Top Right
       {x - CUBE_SIZE_HALF, y + CUBE_SIZE_HALF, z - CUBE_SIZE_HALF},  // Top Left
       {x - CUBE_SIZE_HALF, y - CUBE_SIZE_HALF, z - CUBE_SIZE_HALF},  // Bottom Left
       {x - CUBE_SIZE_HALF, y - CUBE_SIZE_HALF, z + CUBE_SIZE_HALF},  // Bottom Right
+      {x - CUBE_SIZE_HALF, y + CUBE_SIZE_HALF, z + CUBE_SIZE_HALF},  // Top Right
   };
 
   // Define texture coordinates for each vertex
@@ -83,14 +82,15 @@ void DrawCubeTexture(Texture2D &texture_top, Texture2D &texture_side, Texture2D 
   rlColor4ub(color.r, color.g, color.b, color.a);
 
   // Draw all faces
-  rlSetTexture(texture_top.id);
-  DrawCubeFace(texcoords, vertices, 0);
+  for (int i = 0; i < 8; i += 4) {
+    rlSetTexture(textures[i / 4].id);
+    DrawCubeFace(texcoords, vertices, i);
+  }
 
-  rlSetTexture(texture_bottom.id);
-  DrawCubeFace(texcoords, vertices, 4);
-
-  rlSetTexture(texture_side.id);
-  for (int i = 8; i < 24; i += 4) DrawCubeFace(texcoords, vertices, i);
+  for (int i = 8; i < 24; i += 4) {
+    rlSetTexture(textures[2].id);
+    DrawCubeFace(texcoords, vertices, i);
+  }
 
   rlEnd();
 }
@@ -106,15 +106,13 @@ struct App {
     InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "NotMineCraft");
     SetTargetFPS(120);
 
-    cubeTexTop = LoadTexture("asset/cube_top.png");
-    cubeTexSide = LoadTexture("asset/cube_side.png");
-    cubeTexBottom = LoadTexture("asset/cube_bottom.png");
+    cubeTexs[0] = LoadTexture("asset/cube_top.png");
+    cubeTexs[1] = LoadTexture("asset/cube_bottom.png");
+    cubeTexs[2] = LoadTexture("asset/cube_side.png");
   }
 
   ~App() {
-    UnloadTexture(cubeTexTop);
-    UnloadTexture(cubeTexSide);
-    UnloadTexture(cubeTexBottom);
+    for (int i = 0; i < 6; i++) UnloadTexture(cubeTexs[i]);
     CloseWindow();
   }
 
@@ -128,12 +126,12 @@ struct App {
       BeginMode3D(camera);
 
       rlEnableBackfaceCulling();
-      // rlCullMode(RL_CULL_FACE_BACK);
+      rlCullMode(RL_CULL_FACE_BACK);
 
       for (int i = 0; i < 10; i++) {
         for (int j = 0; j < 10; j++) {
-          Vector3 cubePos{0.0f + (CUBE_SIZE + 1.0) * j, 0.0f, 0.0f + (CUBE_SIZE + 1.0) * i};
-          DrawCubeTexture(cubeTexTop, cubeTexSide, cubeTexBottom, cubePos, WHITE);
+          Vector3 cubePos{0.0f + CUBE_SIZE * j, 0.0f, 0.0f + CUBE_SIZE * i};
+          DrawCubeTexture(cubeTexs, cubePos, WHITE);
         }
       }
 
@@ -151,7 +149,5 @@ struct App {
 
  private:
   Camera camera{0};
-  Texture2D cubeTexTop{0};
-  Texture2D cubeTexSide{0};
-  Texture2D cubeTexBottom{0};
+  Texture2D cubeTexs[3];
 };
