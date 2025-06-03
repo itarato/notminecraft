@@ -4,7 +4,10 @@
 #include "raylib.h"
 #include "rlgl.h"
 
-void DrawCubeFace(Vector2* texcoords, Vector3* vertices, int i) {
+#define CUBE_SIZE 2.0f
+#define CUBE_SIZE_HALF 1.0f
+
+void DrawCubeFace(Vector2 *texcoords, Vector3 *vertices, int i) {
   rlTexCoord2f(texcoords[i].x, texcoords[i].y);
   rlVertex3f(vertices[i].x, vertices[i].y, vertices[i].z);
 
@@ -18,53 +21,52 @@ void DrawCubeFace(Vector2* texcoords, Vector3* vertices, int i) {
   rlVertex3f(vertices[i + 3].x, vertices[i + 3].y, vertices[i + 3].z);
 }
 
-void DrawCubeTexture(Texture2D texture_top, Texture2D texture_side, Texture2D texture_bottom, Vector3 position,
-                     float width, float height, float length, Color color) {
+void DrawCubeTexture(Texture2D &texture_top, Texture2D &texture_side, Texture2D &texture_bottom, Vector3 position,
+                     Color color) {
   float x = position.x;
   float y = position.y;
   float z = position.z;
 
   // Enable backface culling
-  rlEnableBackfaceCulling();
 
   // Define vertices for all faces
   // Vertices defined clockwise for each face when looking at the face from outside
   Vector3 vertices[24] = {
       // Top face (+Y)
-      {x - width / 2, y + height / 2, z - length / 2},  // Bottom Left
-      {x - width / 2, y + height / 2, z + length / 2},  // Top Left
-      {x + width / 2, y + height / 2, z + length / 2},  // Top Right
-      {x + width / 2, y + height / 2, z - length / 2},  // Bottom Right
+      {x - CUBE_SIZE_HALF, y + CUBE_SIZE_HALF, z - CUBE_SIZE_HALF},  // Bottom Left
+      {x - CUBE_SIZE_HALF, y + CUBE_SIZE_HALF, z + CUBE_SIZE_HALF},  // Top Left
+      {x + CUBE_SIZE_HALF, y + CUBE_SIZE_HALF, z + CUBE_SIZE_HALF},  // Top Right
+      {x + CUBE_SIZE_HALF, y + CUBE_SIZE_HALF, z - CUBE_SIZE_HALF},  // Bottom Right
 
       // Bottom face (-Y)
-      {x + width / 2, y - height / 2, z + length / 2},  // Top Right
-      {x - width / 2, y - height / 2, z + length / 2},  // Top Left
-      {x - width / 2, y - height / 2, z - length / 2},  // Bottom Left
-      {x + width / 2, y - height / 2, z - length / 2},  // Bottom Right
+      {x + CUBE_SIZE_HALF, y - CUBE_SIZE_HALF, z + CUBE_SIZE_HALF},  // Top Right
+      {x - CUBE_SIZE_HALF, y - CUBE_SIZE_HALF, z + CUBE_SIZE_HALF},  // Top Left
+      {x - CUBE_SIZE_HALF, y - CUBE_SIZE_HALF, z - CUBE_SIZE_HALF},  // Bottom Left
+      {x + CUBE_SIZE_HALF, y - CUBE_SIZE_HALF, z - CUBE_SIZE_HALF},  // Bottom Right
 
       // Front face (+Z)
-      {x + width / 2, y + height / 2, z + length / 2},  // Top Right
-      {x + width / 2, y - height / 2, z + length / 2},  // Bottom Right
-      {x - width / 2, y - height / 2, z + length / 2},  // Bottom Left
-      {x - width / 2, y + height / 2, z + length / 2},  // Top Left
+      {x + CUBE_SIZE_HALF, y + CUBE_SIZE_HALF, z + CUBE_SIZE_HALF},  // Top Right
+      {x + CUBE_SIZE_HALF, y - CUBE_SIZE_HALF, z + CUBE_SIZE_HALF},  // Bottom Right
+      {x - CUBE_SIZE_HALF, y - CUBE_SIZE_HALF, z + CUBE_SIZE_HALF},  // Bottom Left
+      {x - CUBE_SIZE_HALF, y + CUBE_SIZE_HALF, z + CUBE_SIZE_HALF},  // Top Left
 
       // Back face (-Z)
-      {x - width / 2, y + height / 2, z - length / 2},  // Top Right
-      {x - width / 2, y - height / 2, z - length / 2},  // Bottom Right
-      {x + width / 2, y - height / 2, z - length / 2},  // Bottom Left
-      {x + width / 2, y + height / 2, z - length / 2},  // Top Left
+      {x - CUBE_SIZE_HALF, y + CUBE_SIZE_HALF, z - CUBE_SIZE_HALF},  // Top Right
+      {x - CUBE_SIZE_HALF, y - CUBE_SIZE_HALF, z - CUBE_SIZE_HALF},  // Bottom Right
+      {x + CUBE_SIZE_HALF, y - CUBE_SIZE_HALF, z - CUBE_SIZE_HALF},  // Bottom Left
+      {x + CUBE_SIZE_HALF, y + CUBE_SIZE_HALF, z - CUBE_SIZE_HALF},  // Top Left
 
       // Right face (+X)
-      {x + width / 2, y + height / 2, z + length / 2},  // Top Right
-      {x + width / 2, y + height / 2, z - length / 2},  // Top Left
-      {x + width / 2, y - height / 2, z - length / 2},  // Bottom Left
-      {x + width / 2, y - height / 2, z + length / 2},  // Bottom Right
+      {x + CUBE_SIZE_HALF, y + CUBE_SIZE_HALF, z + CUBE_SIZE_HALF},  // Top Right
+      {x + CUBE_SIZE_HALF, y + CUBE_SIZE_HALF, z - CUBE_SIZE_HALF},  // Top Left
+      {x + CUBE_SIZE_HALF, y - CUBE_SIZE_HALF, z - CUBE_SIZE_HALF},  // Bottom Left
+      {x + CUBE_SIZE_HALF, y - CUBE_SIZE_HALF, z + CUBE_SIZE_HALF},  // Bottom Right
 
       // Left face (-X)
-      {x - width / 2, y + height / 2, z + length / 2},  // Top Right
-      {x - width / 2, y + height / 2, z - length / 2},  // Top Left
-      {x - width / 2, y - height / 2, z - length / 2},  // Bottom Left
-      {x - width / 2, y - height / 2, z + length / 2},  // Bottom Right
+      {x - CUBE_SIZE_HALF, y + CUBE_SIZE_HALF, z + CUBE_SIZE_HALF},  // Top Right
+      {x - CUBE_SIZE_HALF, y + CUBE_SIZE_HALF, z - CUBE_SIZE_HALF},  // Top Left
+      {x - CUBE_SIZE_HALF, y - CUBE_SIZE_HALF, z - CUBE_SIZE_HALF},  // Bottom Left
+      {x - CUBE_SIZE_HALF, y - CUBE_SIZE_HALF, z + CUBE_SIZE_HALF},  // Bottom Right
   };
 
   // Define texture coordinates for each vertex
@@ -91,9 +93,6 @@ void DrawCubeTexture(Texture2D texture_top, Texture2D texture_side, Texture2D te
   for (int i = 8; i < 24; i += 4) DrawCubeFace(texcoords, vertices, i);
 
   rlEnd();
-
-  // Disable backface culling (return to default state)
-  rlDisableBackfaceCulling();
 }
 
 struct App {
@@ -120,8 +119,6 @@ struct App {
   }
 
   void loop() {
-    Vector3 cubePos{10.0f, 0.0f, 0.0f};
-
     while (!WindowShouldClose()) {
       UpdateCamera(&camera, CAMERA_FREE);
 
@@ -129,11 +126,25 @@ struct App {
       ClearBackground(RAYWHITE);
 
       BeginMode3D(camera);
-      DrawCubeTexture(cubeTexTop, cubeTexSide, cubeTexBottom, cubePos, 2.0f, 2.0f, 2.0f, WHITE);
-      DrawCubeWires(cubePos, 2.0f, 2.0f, 2.0f, BLACK);
+
+      rlEnableBackfaceCulling();
+      // rlCullMode(RL_CULL_FACE_BACK);
+
+      for (int i = 0; i < 10; i++) {
+        for (int j = 0; j < 10; j++) {
+          Vector3 cubePos{0.0f + (CUBE_SIZE + 1.0) * j, 0.0f, 0.0f + (CUBE_SIZE + 1.0) * i};
+          DrawCubeTexture(cubeTexTop, cubeTexSide, cubeTexBottom, cubePos, WHITE);
+        }
+      }
+
+      rlDisableBackfaceCulling();
+
+      // DrawCubeWires(cubePos, CUBE_SIZE, CUBE_SIZE, CUBE_SIZE, BLACK);
       EndMode3D();
 
       DrawFPS(10, 10);
+      DrawText(TextFormat("Camera: %f  :  %f  :  %f", camera.position.x, camera.position.y, camera.position.z), 10, 30,
+               20, DARKGREEN);
       EndDrawing();
     }
   }
