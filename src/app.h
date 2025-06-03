@@ -130,8 +130,10 @@ struct App {
 
       for (int i = 0; i < 10; i++) {
         for (int j = 0; j < 10; j++) {
-          Vector3 cubePos{0.0f + CUBE_SIZE * j, 0.0f, 0.0f + CUBE_SIZE * i};
-          DrawCubeTexture(cubeTexs, cubePos, WHITE);
+          for (int k = 0; k < 10; k++) {
+            Vector3 cubePos{0.0f + CUBE_SIZE * j, 0.0f + CUBE_SIZE * k, 0.0f + CUBE_SIZE * i};
+            DrawCubeTexture(cubeTexs, cubePos, WHITE);
+          }
         }
       }
 
