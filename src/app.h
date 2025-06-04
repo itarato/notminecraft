@@ -1,5 +1,9 @@
 #pragma once
 
+#include <fstream>
+#include <iostream>
+#include <vector>
+
 #include "config.h"
 #include "raylib.h"
 #include "rlgl.h"
@@ -97,26 +101,54 @@ void DrawCubeTexture(Texture2D *textures, Vector3 position, Color color) {
 
 struct App {
   App() {
-    camera.position = (Vector3){0.0f, 2.0f, 4.0f};
-    camera.target = (Vector3){0.0f, 2.0f, 0.0f};
-    camera.up = (Vector3){0.0f, 1.0f, 0.0f};
+    camera.position = Vector3(5.0f, 40.0f, 4.0f);
+    camera.target = Vector3(0.0f, 2.0f, 0.0f);
+    camera.up = Vector3(0.0f, 1.0f, 0.0f);
     camera.fovy = 60.0f;
     camera.projection = CAMERA_PERSPECTIVE;
 
     InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "NotMineCraft");
     SetTargetFPS(120);
 
-    cubeTexs[0] = LoadTexture("asset/cube_top.png");
-    cubeTexs[1] = LoadTexture("asset/cube_bottom.png");
-    cubeTexs[2] = LoadTexture("asset/cube_side.png");
+    DisableCursor();
+
+    grass_cube_textures[0] = LoadTexture("asset/cube_top.png");
+    grass_cube_textures[1] = LoadTexture("asset/cube_bottom.png");
+    grass_cube_textures[2] = LoadTexture("asset/cube_side.png");
+
+    soil_cube_textures[0] = grass_cube_textures[1];
+    soil_cube_textures[1] = grass_cube_textures[1];
+    soil_cube_textures[2] = grass_cube_textures[1];
   }
 
   ~App() {
-    for (int i = 0; i < 6; i++) UnloadTexture(cubeTexs[i]);
+    for (int i = 0; i < 3; i++) UnloadTexture(grass_cube_textures[i]);
+    for (int i = 0; i < 3; i++) UnloadTexture(soil_cube_textures[i]);
     CloseWindow();
   }
 
   void loop() {
+    std::vector<std::vector<int>> map;
+    int map_size;
+    std::ifstream map_file("./test.map");
+
+    if (map_file.is_open()) {
+      map_file >> map_size;
+      map.resize(map_size);
+
+      for (int i = 0; i < map_size; ++i) {
+        map[i].resize(map_size);
+        for (int j = 0; j < map_size; ++j) {
+          map_file >> map[i][j];
+          TRACELOG("%d : %d = %d", j, i, map[i][j]);
+        }
+      }
+
+      map_file.close();
+    } else {
+      TraceLog(LOG_ERROR, "Failed to load map");
+    }
+
     while (!WindowShouldClose()) {
       UpdateCamera(&camera, CAMERA_FREE);
 
@@ -126,30 +158,34 @@ struct App {
       BeginMode3D(camera);
 
       rlEnableBackfaceCulling();
-      rlCullMode(RL_CULL_FACE_BACK);
 
-      for (int i = 0; i < 10; i++) {
-        for (int j = 0; j < 10; j++) {
-          for (int k = 0; k < 10; k++) {
-            Vector3 cubePos{0.0f + CUBE_SIZE * j, 0.0f + CUBE_SIZE * k, 0.0f + CUBE_SIZE * i};
-            DrawCubeTexture(cubeTexs, cubePos, WHITE);
+      for (int i = 0; i < map_size; i++) {
+        for (int j = 0; j < map_size; j++) {
+          Vector3 cube_pos{0.0f + CUBE_SIZE * j, map[j][i] * CUBE_SIZE, 0.0f + CUBE_SIZE * i};
+          DrawCubeTexture(grass_cube_textures, cube_pos, WHITE);
+
+          for (int k = map[j][i] - 1; k >= 0; k--) {
+            Vector3 cube_pos{0.0f + CUBE_SIZE * j, k * CUBE_SIZE, 0.0f + CUBE_SIZE * i};
+            DrawCubeTexture(soil_cube_textures, cube_pos, WHITE);
           }
         }
       }
 
       rlDisableBackfaceCulling();
 
-      // DrawCubeWires(cubePos, CUBE_SIZE, CUBE_SIZE, CUBE_SIZE, BLACK);
+      // DrawCubeWires(cube_pos, CUBE_SIZE, CUBE_SIZE, CUBE_SIZE, BLACK);
       EndMode3D();
 
       DrawFPS(10, 10);
-      DrawText(TextFormat("Camera: %f  :  %f  :  %f", camera.position.x, camera.position.y, camera.position.z), 10, 30,
-               20, DARKGREEN);
+      // DrawText(TextFormat("Camera: %f  :  %f  :  %f", camera.position.x, camera.position.y, camera.position.z), 10,
+      // 30,
+      //          20, DARKGREEN);
       EndDrawing();
     }
   }
 
  private:
   Camera camera{0};
-  Texture2D cubeTexs[3];
+  Texture2D grass_cube_textures[3];
+  Texture2D soil_cube_textures[3];
 };
