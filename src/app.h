@@ -1,16 +1,17 @@
 #pragma once
 
+#include <cmath>
 #include <fstream>
 #include <iostream>
+#include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
+#include "common.h"
 #include "config.h"
 #include "map_slice.h"
 #include "raylib.h"
 #include "rlgl.h"
-
-#define CUBE_SIZE 2.0f
-#define CUBE_SIZE_HALF 1.0f
 
 #define TEX_SOIL_TOP 0
 #define TEX_SOIL_BOTTOM 1
@@ -113,8 +114,8 @@ void DrawCubeTexture(Texture2D &texture_top, Texture2D &texture_bottom, Texture2
 
 struct App {
   App() {
-    camera.position = Vector3(5.0f, 40.0f, 4.0f);
-    camera.target = Vector3(0.0f, 2.0f, 0.0f);
+    camera.position = Vector3(20.0f, 30.0f, 20.0f);
+    camera.target = Vector3(0.0f, 5.0f, 0.0f);
     camera.up = Vector3(0.0f, 1.0f, 0.0f);
     camera.fovy = 60.0f;
     camera.projection = CAMERA_PERSPECTIVE;
@@ -136,10 +137,18 @@ struct App {
   }
 
   void loop() {
-    MapSlice map_slice = load_or_generate(0, 0);
+    // map_slices[IntCoord(0, 0)] = load_or_generate(0, 0);
 
     while (!WindowShouldClose()) {
       UpdateCamera(&camera, CAMERA_FREE);
+
+      int map_slice_xidx = (int)lround(camera.position.x / (CUBE_SIZE * MAP_SIZE));
+      int map_slice_zidx = (int)lround(camera.position.z / (CUBE_SIZE * MAP_SIZE));
+      IntCoord map_slice_coord = IntCoord(map_slice_xidx, map_slice_zidx);
+
+      if (!map_slices.contains(map_slice_coord)) {
+        map_slices[map_slice_coord] = load_or_generate(map_slice_xidx, map_slice_zidx);
+      }
 
       BeginDrawing();
       ClearBackground(Color(220, 230, 255, 255));
@@ -148,23 +157,32 @@ struct App {
 
       rlEnableBackfaceCulling();
 
-      for (int i = 0; i < MAP_SIZE; i++) {
-        for (int j = 0; j < MAP_SIZE; j++) {
-          const static int *tex_indices;
-          if (map_slice.height_map[j][i] >= 1) {
-            tex_indices = tex_grass_indices;
-          } else {
-            tex_indices = tex_sand_indices;
-          }
+      for (const std::pair<const IntCoord, MapSlice> &kv : map_slices) {
+        const auto &map_slice = kv.second;
 
-          Vector3 cube_pos{0.0f + CUBE_SIZE * j, map_slice.height_map[j][i] * CUBE_SIZE, 0.0f + CUBE_SIZE * i};
-          DrawCubeTexture(textures[*(tex_indices + 0)], textures[*(tex_indices + 1)], textures[*(tex_indices + 2)],
-                          cube_pos, WHITE);
+        float map_slice_world_xoffs = -MAP_SLICE_HALF + MAP_SLICE * kv.first.x;
+        float map_slice_world_zoffs = -MAP_SLICE_HALF + MAP_SLICE * kv.first.y;
 
-          for (int k = map_slice.height_map[j][i] - 1; k >= 0; k--) {
-            Vector3 cube_pos{0.0f + CUBE_SIZE * j, k * CUBE_SIZE, 0.0f + CUBE_SIZE * i};
-            DrawCubeTexture(textures[TEX_SOIL_BOTTOM], textures[TEX_SOIL_BOTTOM], textures[TEX_SOIL_BOTTOM], cube_pos,
-                            WHITE);
+        for (int i = 0; i < MAP_SIZE; i++) {
+          for (int j = 0; j < MAP_SIZE; j++) {
+            const static int *tex_indices;
+            if (map_slice.height_map[j][i] >= 1) {
+              tex_indices = tex_grass_indices;
+            } else {
+              tex_indices = tex_sand_indices;
+            }
+
+            Vector3 cube_pos{map_slice_world_xoffs + CUBE_SIZE * j, map_slice.height_map[j][i] * CUBE_SIZE,
+                             map_slice_world_zoffs + CUBE_SIZE * i};
+            DrawCubeTexture(textures[*(tex_indices + 0)], textures[*(tex_indices + 1)], textures[*(tex_indices + 2)],
+                            cube_pos, WHITE);
+
+            for (int k = map_slice.height_map[j][i] - 1; k >= 0; k--) {
+              Vector3 cube_pos{map_slice_world_xoffs + CUBE_SIZE * j, k * CUBE_SIZE,
+                               map_slice_world_zoffs + CUBE_SIZE * i};
+              DrawCubeTexture(textures[TEX_SOIL_BOTTOM], textures[TEX_SOIL_BOTTOM], textures[TEX_SOIL_BOTTOM], cube_pos,
+                              WHITE);
+            }
           }
         }
       }
@@ -174,6 +192,10 @@ struct App {
       EndMode3D();
 
       DrawFPS(10, 10);
+      // DrawText(TextFormat("CAM: %d:%d - %ld:%ld", (int)camera.position.x, (int)camera.position.z,
+      //                     lround(camera.position.x / (CUBE_SIZE * MAP_SIZE)),
+      //                     lround(camera.position.z / (CUBE_SIZE * MAP_SIZE))),
+      //  10, 30, 20, ORANGE);
       EndDrawing();
     }
   }
@@ -181,4 +203,6 @@ struct App {
  private:
   Camera camera{0};
   std::vector<Texture2D> textures{};
+  std::unordered_set<IntCoord> loaded_slices{};
+  std::unordered_map<IntCoord, MapSlice> map_slices{};
 };
