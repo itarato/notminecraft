@@ -4,6 +4,6 @@
 #define SCREEN_HEIGHT 768
 
 #define MAP_SIZE 30
-#define MAP_BUMP_COUNT 100
+#define MAP_BUMP_COUNT 20
 #define MAP_BUMP_HEIGHT 2
-#define MAP_BUMP_SPREAD 5
+#define MAP_BUMP_SPREAD 8
