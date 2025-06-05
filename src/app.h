@@ -12,6 +12,15 @@
 #define CUBE_SIZE 2.0f
 #define CUBE_SIZE_HALF 1.0f
 
+#define TEX_SOIL_TOP 0
+#define TEX_SOIL_BOTTOM 1
+#define TEX_SOIL_SIDE 2
+#define TEX_SAND 3
+
+const static int tex_grass_indices[3] = {TEX_SOIL_TOP, TEX_SOIL_BOTTOM, TEX_SOIL_SIDE};
+const static int tex_soil_indices[3] = {TEX_SOIL_SIDE, TEX_SOIL_SIDE, TEX_SOIL_SIDE};
+const static int tex_sand_indices[3] = {TEX_SAND, TEX_SAND, TEX_SAND};
+
 void DrawCubeFace(Vector2 *texcoords, Vector3 *vertices, int i) {
   rlTexCoord2f(texcoords[i].x, texcoords[i].y);
   rlVertex3f(vertices[i].x, vertices[i].y, vertices[i].z);
@@ -26,7 +35,8 @@ void DrawCubeFace(Vector2 *texcoords, Vector3 *vertices, int i) {
   rlVertex3f(vertices[i + 3].x, vertices[i + 3].y, vertices[i + 3].z);
 }
 
-void DrawCubeTexture(Texture2D *textures, Vector3 position, Color color) {
+void DrawCubeTexture(Texture2D &texture_top, Texture2D &texture_bottom, Texture2D &texture_side, Vector3 position,
+                     Color color) {
   float x = position.x;
   float y = position.y;
   float z = position.z;
@@ -87,13 +97,14 @@ void DrawCubeTexture(Texture2D *textures, Vector3 position, Color color) {
   rlColor4ub(color.r, color.g, color.b, color.a);
 
   // Draw all faces
-  for (int i = 0; i < 8; i += 4) {
-    rlSetTexture(textures[i / 4].id);
-    DrawCubeFace(texcoords, vertices, i);
-  }
+  rlSetTexture(texture_top.id);
+  DrawCubeFace(texcoords, vertices, 0);
+
+  rlSetTexture(texture_bottom.id);
+  DrawCubeFace(texcoords, vertices, 4);
 
   for (int i = 8; i < 24; i += 4) {
-    rlSetTexture(textures[2].id);
+    rlSetTexture(texture_side.id);
     DrawCubeFace(texcoords, vertices, i);
   }
 
@@ -113,18 +124,14 @@ struct App {
 
     DisableCursor();
 
-    grass_cube_textures[0] = LoadTexture("asset/cube_top.png");
-    grass_cube_textures[1] = LoadTexture("asset/cube_bottom.png");
-    grass_cube_textures[2] = LoadTexture("asset/cube_side.png");
-
-    soil_cube_textures[0] = grass_cube_textures[1];
-    soil_cube_textures[1] = grass_cube_textures[1];
-    soil_cube_textures[2] = grass_cube_textures[1];
+    textures.push_back(LoadTexture("asset/cube_top.png"));
+    textures.push_back(LoadTexture("asset/cube_bottom.png"));
+    textures.push_back(LoadTexture("asset/cube_side.png"));
+    textures.push_back(LoadTexture("asset/cube_sand.png"));
   }
 
   ~App() {
-    for (int i = 0; i < 3; i++) UnloadTexture(grass_cube_textures[i]);
-    for (int i = 0; i < 3; i++) UnloadTexture(soil_cube_textures[i]);
+    for (auto &texture : textures) UnloadTexture(texture);
     CloseWindow();
   }
 
@@ -135,7 +142,7 @@ struct App {
       UpdateCamera(&camera, CAMERA_FREE);
 
       BeginDrawing();
-      ClearBackground(RAYWHITE);
+      ClearBackground(Color(220, 230, 255, 255));
 
       BeginMode3D(camera);
 
@@ -143,31 +150,35 @@ struct App {
 
       for (int i = 0; i < MAP_SIZE; i++) {
         for (int j = 0; j < MAP_SIZE; j++) {
+          const static int *tex_indices;
+          if (map_slice.height_map[j][i] >= 1) {
+            tex_indices = tex_grass_indices;
+          } else {
+            tex_indices = tex_sand_indices;
+          }
+
           Vector3 cube_pos{0.0f + CUBE_SIZE * j, map_slice.height_map[j][i] * CUBE_SIZE, 0.0f + CUBE_SIZE * i};
-          DrawCubeTexture(grass_cube_textures, cube_pos, WHITE);
+          DrawCubeTexture(textures[*(tex_indices + 0)], textures[*(tex_indices + 1)], textures[*(tex_indices + 2)],
+                          cube_pos, WHITE);
 
           for (int k = map_slice.height_map[j][i] - 1; k >= 0; k--) {
             Vector3 cube_pos{0.0f + CUBE_SIZE * j, k * CUBE_SIZE, 0.0f + CUBE_SIZE * i};
-            DrawCubeTexture(soil_cube_textures, cube_pos, WHITE);
+            DrawCubeTexture(textures[TEX_SOIL_BOTTOM], textures[TEX_SOIL_BOTTOM], textures[TEX_SOIL_BOTTOM], cube_pos,
+                            WHITE);
           }
         }
       }
 
       rlDisableBackfaceCulling();
 
-      // DrawCubeWires(cube_pos, CUBE_SIZE, CUBE_SIZE, CUBE_SIZE, BLACK);
       EndMode3D();
 
       DrawFPS(10, 10);
-      // DrawText(TextFormat("Camera: %f  :  %f  :  %f", camera.position.x, camera.position.y, camera.position.z), 10,
-      // 30,
-      //          20, DARKGREEN);
       EndDrawing();
     }
   }
 
  private:
   Camera camera{0};
-  Texture2D grass_cube_textures[3];
-  Texture2D soil_cube_textures[3];
+  std::vector<Texture2D> textures{};
 };
