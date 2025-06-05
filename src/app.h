@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "config.h"
+#include "map_slice.h"
 #include "raylib.h"
 #include "rlgl.h"
 
@@ -128,26 +129,7 @@ struct App {
   }
 
   void loop() {
-    std::vector<std::vector<int>> map;
-    int map_size;
-    std::ifstream map_file("./test.map");
-
-    if (map_file.is_open()) {
-      map_file >> map_size;
-      map.resize(map_size);
-
-      for (int i = 0; i < map_size; ++i) {
-        map[i].resize(map_size);
-        for (int j = 0; j < map_size; ++j) {
-          map_file >> map[i][j];
-          TRACELOG("%d : %d = %d", j, i, map[i][j]);
-        }
-      }
-
-      map_file.close();
-    } else {
-      TraceLog(LOG_ERROR, "Failed to load map");
-    }
+    MapSlice map_slice = load_or_generate(0, 0);
 
     while (!WindowShouldClose()) {
       UpdateCamera(&camera, CAMERA_FREE);
@@ -159,12 +141,12 @@ struct App {
 
       rlEnableBackfaceCulling();
 
-      for (int i = 0; i < map_size; i++) {
-        for (int j = 0; j < map_size; j++) {
-          Vector3 cube_pos{0.0f + CUBE_SIZE * j, map[j][i] * CUBE_SIZE, 0.0f + CUBE_SIZE * i};
+      for (int i = 0; i < MAP_SIZE; i++) {
+        for (int j = 0; j < MAP_SIZE; j++) {
+          Vector3 cube_pos{0.0f + CUBE_SIZE * j, map_slice.height_map[j][i] * CUBE_SIZE, 0.0f + CUBE_SIZE * i};
           DrawCubeTexture(grass_cube_textures, cube_pos, WHITE);
 
-          for (int k = map[j][i] - 1; k >= 0; k--) {
+          for (int k = map_slice.height_map[j][i] - 1; k >= 0; k--) {
             Vector3 cube_pos{0.0f + CUBE_SIZE * j, k * CUBE_SIZE, 0.0f + CUBE_SIZE * i};
             DrawCubeTexture(soil_cube_textures, cube_pos, WHITE);
           }
