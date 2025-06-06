@@ -1,5 +1,7 @@
 #pragma once
 
+#include <ctype.h>
+
 #include <cstdlib>
 #include <fstream>
 #include <string>
@@ -18,10 +20,10 @@ struct MapSlice {
   std::vector<std::vector<u_int8_t>> visible_face_mask{};
 
   MapSlice(std::vector<std::vector<int>> height_map) : height_map(height_map) {
-    init_visible_face_map();
+    init_visible_face_mask();
   }
 
-  void init_visible_face_map() {
+  void init_visible_face_mask() {
     visible_face_mask.resize(MAP_SIZE);
 
     for (int z = 0; z < MAP_SIZE; z++) {

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <ctype.h>
+
 #include <cmath>
 #include <fstream>
 #include <iostream>
@@ -47,7 +49,7 @@ void DrawCubeFace(Vector2 *texcoords, Vector3 *vertices, int i) {
 }
 
 void DrawCubeTexture(Texture2D &texture_top, Texture2D &texture_bottom, Texture2D &texture_side, Vector3 position,
-                     Color color) {
+                     Color color, u_int8_t visible_face_mask) {
   float x = position.x;
   float y = position.y;
   float z = position.z;
@@ -98,15 +100,21 @@ void DrawCubeTexture(Texture2D &texture_top, Texture2D &texture_bottom, Texture2
   rlColor4ub(color.r, color.g, color.b, color.a);
 
   // Draw all faces
-  rlSetTexture(texture_top.id);
-  DrawCubeFace(texcoords, vertices, 0);
+  if (visible_face_mask & 0b1) {
+    rlSetTexture(texture_top.id);
+    DrawCubeFace(texcoords, vertices, 0);
+  }
 
-  rlSetTexture(texture_bottom.id);
-  DrawCubeFace(texcoords, vertices, 4);
+  if (visible_face_mask & 0b10) {
+    rlSetTexture(texture_bottom.id);
+    DrawCubeFace(texcoords, vertices, 4);
+  }
 
-  for (int i = 8; i < 24; i += 4) {
-    rlSetTexture(texture_side.id);
-    DrawCubeFace(texcoords, vertices, i);
+  for (int i = 2; i < 6; i++) {
+    if (visible_face_mask & (1 << i)) {
+      rlSetTexture(texture_side.id);
+      DrawCubeFace(texcoords, vertices, i << 2);
+    }
   }
 
   rlEnd();
@@ -147,7 +155,7 @@ struct App {
       IntCoord map_slice_coord = IntCoord(map_slice_xidx, map_slice_zidx);
 
       if (!map_slices.contains(map_slice_coord)) {
-        map_slices[map_slice_coord] = load_or_generate(map_slice_xidx, map_slice_zidx);
+        map_slices.emplace(map_slice_coord, load_or_generate(map_slice_xidx, map_slice_zidx));
       }
 
       BeginDrawing();
@@ -163,19 +171,19 @@ struct App {
         float map_slice_world_xoffs = -MAP_SLICE_HALF + MAP_SLICE * kv.first.x;
         float map_slice_world_zoffs = -MAP_SLICE_HALF + MAP_SLICE * kv.first.y;
 
-        for (int i = 0; i < MAP_SIZE; i++) {
-          for (int j = 0; j < MAP_SIZE; j++) {
+        for (int z = 0; z < MAP_SIZE; z++) {
+          for (int x = 0; x < MAP_SIZE; x++) {
             const static int *tex_indices;
-            if (map_slice.height_map[j][i] >= 1) {
+            if (map_slice.height_map[z][x] >= 1) {
               tex_indices = tex_grass_indices;
             } else {
               tex_indices = tex_sand_indices;
             }
 
-            Vector3 cube_pos{map_slice_world_xoffs + CUBE_SIZE * j, map_slice.height_map[j][i] * CUBE_SIZE,
-                             map_slice_world_zoffs + CUBE_SIZE * i};
+            Vector3 cube_pos{map_slice_world_xoffs + CUBE_SIZE * x, map_slice.height_map[z][x] * CUBE_SIZE,
+                             map_slice_world_zoffs + CUBE_SIZE * z};
             DrawCubeTexture(textures[*(tex_indices + 0)], textures[*(tex_indices + 1)], textures[*(tex_indices + 2)],
-                            cube_pos, WHITE);
+                            cube_pos, WHITE, map_slice.visible_face_mask[z][x]);
 
             // for (int k = map_slice.height_map[j][i] - 1; k >= 0; k--) {
             //   Vector3 cube_pos{map_slice_world_xoffs + CUBE_SIZE * j, k * CUBE_SIZE,
