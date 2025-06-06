@@ -22,6 +22,16 @@ const static int tex_grass_indices[3] = {TEX_SOIL_TOP, TEX_SOIL_BOTTOM, TEX_SOIL
 const static int tex_soil_indices[3] = {TEX_SOIL_SIDE, TEX_SOIL_SIDE, TEX_SOIL_SIDE};
 const static int tex_sand_indices[3] = {TEX_SAND, TEX_SAND, TEX_SAND};
 
+// Define texture coordinates for each vertex
+static Vector2 texcoords[24] = {
+    {0.0f, 0.0f}, {0.0f, 1.0f}, {1.0f, 1.0f}, {1.0f, 0.0f},  // Top
+    {0.0f, 0.0f}, {1.0f, 0.0f}, {1.0f, 1.0f}, {0.0f, 1.0f},  // Bottom
+    {0.0f, 0.0f}, {0.0f, 1.0f}, {1.0f, 1.0f}, {1.0f, 0.0f},  // Front
+    {0.0f, 0.0f}, {0.0f, 1.0f}, {1.0f, 1.0f}, {1.0f, 0.0f},  // Back
+    {0.0f, 0.0f}, {1.0f, 0.0f}, {1.0f, 1.0f}, {0.0f, 1.0f},  // Right
+    {0.0f, 0.0f}, {1.0f, 0.0f}, {1.0f, 1.0f}, {0.0f, 1.0f},  // Left
+};
+
 void DrawCubeFace(Vector2 *texcoords, Vector3 *vertices, int i) {
   rlTexCoord2f(texcoords[i].x, texcoords[i].y);
   rlVertex3f(vertices[i].x, vertices[i].y, vertices[i].z);
@@ -82,16 +92,6 @@ void DrawCubeTexture(Texture2D &texture_top, Texture2D &texture_bottom, Texture2
       {x - CUBE_SIZE_HALF, y - CUBE_SIZE_HALF, z - CUBE_SIZE_HALF},  // Bottom Left
       {x - CUBE_SIZE_HALF, y - CUBE_SIZE_HALF, z + CUBE_SIZE_HALF},  // Bottom Right
       {x - CUBE_SIZE_HALF, y + CUBE_SIZE_HALF, z + CUBE_SIZE_HALF},  // Top Right
-  };
-
-  // Define texture coordinates for each vertex
-  Vector2 texcoords[24] = {
-      {0.0f, 0.0f}, {0.0f, 1.0f}, {1.0f, 1.0f}, {1.0f, 0.0f},  // Top
-      {0.0f, 0.0f}, {1.0f, 0.0f}, {1.0f, 1.0f}, {0.0f, 1.0f},  // Bottom
-      {0.0f, 0.0f}, {0.0f, 1.0f}, {1.0f, 1.0f}, {1.0f, 0.0f},  // Front
-      {0.0f, 0.0f}, {0.0f, 1.0f}, {1.0f, 1.0f}, {1.0f, 0.0f},  // Back
-      {0.0f, 0.0f}, {1.0f, 0.0f}, {1.0f, 1.0f}, {0.0f, 1.0f},  // Right
-      {0.0f, 0.0f}, {1.0f, 0.0f}, {1.0f, 1.0f}, {0.0f, 1.0f},  // Left
   };
 
   rlBegin(RL_QUADS);
@@ -177,12 +177,13 @@ struct App {
             DrawCubeTexture(textures[*(tex_indices + 0)], textures[*(tex_indices + 1)], textures[*(tex_indices + 2)],
                             cube_pos, WHITE);
 
-            for (int k = map_slice.height_map[j][i] - 1; k >= 0; k--) {
-              Vector3 cube_pos{map_slice_world_xoffs + CUBE_SIZE * j, k * CUBE_SIZE,
-                               map_slice_world_zoffs + CUBE_SIZE * i};
-              DrawCubeTexture(textures[TEX_SOIL_BOTTOM], textures[TEX_SOIL_BOTTOM], textures[TEX_SOIL_BOTTOM], cube_pos,
-                              WHITE);
-            }
+            // for (int k = map_slice.height_map[j][i] - 1; k >= 0; k--) {
+            //   Vector3 cube_pos{map_slice_world_xoffs + CUBE_SIZE * j, k * CUBE_SIZE,
+            //                    map_slice_world_zoffs + CUBE_SIZE * i};
+            //   DrawCubeTexture(textures[TEX_SOIL_BOTTOM], textures[TEX_SOIL_BOTTOM], textures[TEX_SOIL_BOTTOM],
+            //   cube_pos,
+            //                   WHITE);
+            // }
           }
         }
       }

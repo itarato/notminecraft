@@ -1,5 +1,5 @@
 UNAME_S := $(shell uname -s)
-CXXFLAGS = -std=c++2a -Wall -pedantic -Wformat -O3 -lraylib
+CXXFLAGS = -std=c++2a -Wall -pedantic -Wformat -lraylib
 
 ifeq ($(UNAME_S),Linux)
 	LIBS = -lraylib -lGL -lm -lpthread -ldl -lrt -lX11
@@ -13,6 +13,7 @@ OBJ=$(addsuffix .o,$(basename $(MAINSRC)))
 
 .PHONY: all debug
 
+all: CXXFLAGS += -O3
 all: main
 
 debug: CXXFLAGS += -g3 -O0

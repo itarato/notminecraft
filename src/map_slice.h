@@ -9,8 +9,43 @@
 #include "map_gen.h"
 #include "raylib.h"
 
+// Coord order: X then Z: grid[z][x].
+
+const static int neighbour_offs_map[4][2] = {{0, 1}, {0, -1}, {1, 0}, {-1, 0}};
+
 struct MapSlice {
   std::vector<std::vector<int>> height_map;
+  std::vector<std::vector<u_int8_t>> visible_face_mask{};
+
+  MapSlice(std::vector<std::vector<int>> height_map) : height_map(height_map) {
+    init_visible_face_map();
+  }
+
+  void init_visible_face_map() {
+    visible_face_mask.resize(MAP_SIZE);
+
+    for (int z = 0; z < MAP_SIZE; z++) {
+      visible_face_mask[z].resize(MAP_SIZE);
+
+      for (int x = 0; x < MAP_SIZE; x++) {
+        // Bottom is off for now.
+        u_int8_t mask = 0b00111101;
+        // Top is always expected to show.
+
+        for (int k = 0; k < 4; k++) {
+          int nx = x + neighbour_offs_map[k][0];
+          int nz = z + neighbour_offs_map[k][1];
+          if (nx < 0 || nz < 0 || nx >= MAP_SIZE || nz >= MAP_SIZE) continue;
+
+          if (height_map[nz][nx] >= height_map[z][x]) {
+            mask &= 0xff ^ (1 << (2 + k));
+          }
+        }
+
+        visible_face_mask[z][x] = mask;
+      }
+    }
+  }
 };
 
 MapSlice load_or_generate(int slice_xid, int slice_z_id) {
@@ -25,7 +60,7 @@ MapSlice load_or_generate(int slice_xid, int slice_z_id) {
   }
   file_check.close();
 
-  std::vector<std::vector<int>> map;
+  std::vector<std::vector<int>> map{};
   std::ifstream map_file(file_path.c_str());
 
   if (!map_file.is_open()) {
@@ -43,5 +78,5 @@ MapSlice load_or_generate(int slice_xid, int slice_z_id) {
 
   map_file.close();
 
-  return std::move(MapSlice(map));
+  return MapSlice(map);
 }

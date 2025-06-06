@@ -1,12 +1,12 @@
 #pragma once
 
-#define SCREEN_WIDTH 1024
-#define SCREEN_HEIGHT 768
+#define SCREEN_WIDTH 0
+#define SCREEN_HEIGHT 0
 
 #define CUBE_SIZE 2.0f
 #define CUBE_SIZE_HALF 1.0f
 
-#define MAP_SIZE 30
+#define MAP_SIZE 100
 #define MAP_BUMP_COUNT 20
 #define MAP_BUMP_HEIGHT 2
 #define MAP_BUMP_SPREAD 8
