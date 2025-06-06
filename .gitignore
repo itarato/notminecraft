@@ -3,3 +3,7 @@ main
 src/*.o
 .vscode
 *.map
+*.svg
+*.data
+*.folded
+*.perf
